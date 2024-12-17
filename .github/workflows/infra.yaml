@@ -41,17 +41,17 @@ jobs:
 
       # Step 4: Format Check
       - name: Terraform Format Check
-        working-directory: ./grafana-tf/${{ matrix.environment }}
+        working-directory: ./grafana-tf/env/${{ matrix.environment }}
         run: terraform fmt -check
 
       # Step 5: Validate Terraform Code
       - name: Terraform Validate
-        working-directory: ./grafana-tf/${{ matrix.environment }}
+        working-directory: ./grafana-tf/env/${{ matrix.environment }}
         run: terraform validate
 
       # Step 6: Terraform Plan
       - name: Terraform Plan
-        working-directory: ./grafana-tf/${{ matrix.environment }}
+        working-directory: ./grafana-tf/env/${{ matrix.environment }}
         run: |
           terraform plan -input=false \
           -var-file="${{ matrix.environment }}.tfvars"
@@ -61,10 +61,10 @@ jobs:
           ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
           ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
 
-      # Step 7: Terraform Apply (only on 'main' branch)
+      # # Step 7: Terraform Apply (only on 'main' branch)
       # - name: Terraform Apply
       #   if: github.ref == 'refs/heads/main'
-      #   working-directory: ./grafana-tf/${{ matrix.environment }}
+      #   working-directory: ./grafana-tf/env/${{ matrix.environment }}
       #   run: |
       #     terraform apply -auto-approve -input=false \
       #     -var-file="${{ matrix.environment }}.tfvars"
