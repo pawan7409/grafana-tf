@@ -36,7 +36,7 @@ jobs:
 
       # Step 3: Initialize Terraform in the specific environment folder
       - name: Terraform Init
-        working-directory: ./grafana-tf/${{ matrix.environment }}
+        working-directory: ./infrastructuregithub/grafana-tf/${{ matrix.environment }}
         run: terraform init -input=false
 
       # Step 4: Format Check
