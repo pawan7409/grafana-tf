@@ -1,0 +1,75 @@
+name: Terraform Deployment Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - prod
+  workflow_dispatch: # Allows manual triggering
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  terraform:
+    name: Terraform Plan and Apply
+    runs-on: ubuntu-latest
+
+    # Strategy to run for multiple environments
+    strategy:
+      matrix:
+        environment: [dev, prod] # Define the environments
+    environment: ${{ matrix.environment }}
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Terraform
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: "1.6.0"
+
+      # Step 3: Initialize Terraform in the specific environment folder
+      - name: Terraform Init
+        working-directory: ./grafana-tf/${{ matrix.environment }}
+        run: terraform init -input=false
+
+      # Step 4: Format Check
+      - name: Terraform Format Check
+        working-directory: ./grafana-tf/${{ matrix.environment }}
+        run: terraform fmt -check
+
+      # Step 5: Validate Terraform Code
+      - name: Terraform Validate
+        working-directory: ./grafana-tf/${{ matrix.environment }}
+        run: terraform validate
+
+      # Step 6: Terraform Plan
+      - name: Terraform Plan
+        working-directory: ./grafana-tf/${{ matrix.environment }}
+        run: |
+          terraform plan -input=false \
+          -var-file="${{ matrix.environment }}.tfvars"
+        env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+
+      # Step 7: Terraform Apply (only on 'main' branch)
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main'
+        working-directory: ./grafana-tf/${{ matrix.environment }}
+        run: |
+          terraform apply -auto-approve -input=false \
+          -var-file="${{ matrix.environment }}.tfvars"
+        env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
